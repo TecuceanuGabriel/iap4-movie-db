@@ -1,0 +1,58 @@
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment directories
+env/
+venv/
+ENV/
+.venv/
+
+# Dependency files
+*.egg
+*.egg-info/
+dist/
+build/
+pip-wheel-metadata/
+
+# Logs and debugging files
+*.log
+*.pot
+*.pyc
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Pytest cache
+.pytest_cache/
+
+# Coverage reports
+htmlcov/
+.coverage
+*.cover
+*.py,cover
+
+# Mypy cache
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pylint reports
+pylint-report.txt
+
+# IDE/editor configuration
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Sensitive files
+*.env
+.env.*
+config.yaml
+secrets.json
