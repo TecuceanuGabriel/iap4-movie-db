@@ -11,7 +11,7 @@ mongo = PyMongo(app)
 
 @app.route("/")
 def hello_world():
-    return "Hello, World!"
+    return "blbla"
 
 @app.route("/add", methods=["POST"])
 def add_user():

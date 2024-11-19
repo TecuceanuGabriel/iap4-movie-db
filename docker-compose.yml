@@ -9,7 +9,14 @@ services:
     environment:
       - VITE_API_URL=http://localhost:5000
     networks:
-      - app-network
+      - client-server-network
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend
+          target: /app
+        - action: rebuild
+          path: ./frontend/node_modules
 
   backend:
     build:
@@ -22,7 +29,13 @@ services:
       - FLASK_ENV=development
       - MONGO_URI=mongodb://root:root@mongo:27017/data@?authSource=admin
     networks:
-      - app-network
+      - client-server-network
+      - server-database-network
+    develop:
+      watch:
+        - action: sync
+          path: ./backend
+          target: /app
 
   mongo:
     image: mongo:latest
@@ -32,11 +45,14 @@ services:
     #   - ./database:/data/db
     #   - ./database/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     networks:
-      - app-network
+      - server-database-network
     environment:
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=root
       - MONGO_INITDB_DATABASE=data
 
 networks:
-  app-network:
+  client-server-network:
+    driver: bridge
+  server-database-network:
+    driver: bridge
