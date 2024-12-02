@@ -39,7 +39,7 @@ htmlcov/
 .pytest_cache/
 
 # Environment files
-.env
-.env.*
+# .env
+# .env.*
 secrets.json
 config.yaml
