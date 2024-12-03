@@ -14,7 +14,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(_name_)
 CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 app.config["JWT_SECRET"] = os.environ.get("JWT_SECRET")
 
@@ -288,5 +288,5 @@ def search_tv(query, page):
 
     return jsonify({"results": shows}), 200
 
-if __name__ == "__main__":
+if _name_ == "_main_":
     app.run(debug=True, host="0.0.0.0", port=5000)

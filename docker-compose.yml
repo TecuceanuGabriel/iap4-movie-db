@@ -39,6 +39,8 @@ services:
         - action: sync+restart
           path: ./backend
           target: /app
+        - action: rebuild
+          path: ./backend/requirements.txt
 
   mongo:
     image: mongo:latest
