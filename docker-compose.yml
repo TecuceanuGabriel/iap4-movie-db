@@ -33,11 +33,11 @@ services:
       - server-database-network
     develop:
       watch:
-        - action: sync
+        - action: sync+restart
           path: ./backend
           target: /app
         - action: rebuild
-          path: ./backend/venv
+          path: ./backend/requirements.txt
 
   mongo:
     image: mongo:latest
