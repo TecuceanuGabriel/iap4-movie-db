@@ -14,16 +14,18 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 load_dotenv()
 
-app = Flask(_name_)
-CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
-app.config["JWT_SECRET"] = os.environ.get("JWT_SECRET")
+app = Flask(__name__)
 
+CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+
+app.config["JWT_SECRET"] = os.environ.get("JWT_SECRET")
 app.config["MONGO_URI"] = os.environ.get("MONGO_URI")
 
 mongo = PyMongo(app)
 
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
 TMDB_API_KEY = os.environ.get("VITE_TMDB_KEY")
+
 
 def generate_token(email):
     return jwt.encode(
@@ -122,6 +124,7 @@ def get_profile():
 
     return jsonify(user), 200
 
+
 def fetch_tmdb_data(endpoint, params=None):
     endpoint.lstrip("/")
     url = f"{TMDB_BASE_URL}/{endpoint}"
@@ -139,114 +142,86 @@ def fetch_tmdb_data(endpoint, params=None):
 
 @app.route("/configuration", methods=["GET"])
 def get_configuration():
-    data, status_code = fetch_tmdb_data("configuration")
-    return jsonify(data), status_code
+    return fetch_tmdb_data("configuration")
 
 
 @app.route("/genre/movie/list", methods=["GET"])
 def get_movie():
-    data, status_code = fetch_tmdb_data("genre/movie/list")
-    return jsonify(data), status_code
+    return fetch_tmdb_data("genre/movie/list")
 
 
 @app.route("/genre/tv/list", methods=["GET"])
 def get_tv_genres():
-    data, status_code = fetch_tmdb_data("genre/tv/list")
-    return jsonify(data), status_code
+    return fetch_tmdb_data("genre/tv/list")
 
 
 # movies
 @app.route("/movie/details/<int:movie_id>")
-def get_movie_details(movie_id, jsonify=True):
-    data, status_code = fetch_tmdb_data(f"movie/{movie_id}")
-    if status_code != 200:
-        return data["error"], status_code
-    if (jsonify):
-        return jsonify(data), status_code
-    else:
-        return data, status_code
+def get_movie_details(movie_id):
+    return fetch_tmdb_data(f"movie/{movie_id}")
 
 
 @app.route("/movie/popular/<int:page>", methods=["GET"])
 def get_popular_movies(page):
-    data, status_code = fetch_tmdb_data(f"movie/popular?page={page}")
+    data, status_code = fetch_tmdb_data("movie/popular", {"page": page})
     if status_code != 200:
-        return data["error"], status_code
+        return data, status_code
 
     for result in data["results"]:
-        movie_details, movie_status_code = get_movie_details(result["id"], False)
+        movie_details, movie_status_code = get_movie_details(result["id"])
         if movie_status_code == 200:
-            result["runtime"] = movie_details["runtime"]
+            result["runtime"] = movie_details.get("runtime")
         else:
             result["runtime"] = None
 
-    return jsonify(data), status_code
+    return data, status_code
 
 
 @app.route("/movie/top_rated/<int:page>", methods=["GET"])
 def get_top_rated_movies(page):
-    data, status_code = fetch_tmdb_data(
-        "movie/top_rated", {"page": page}
-    )
-    return jsonify(data), status_code
+    return fetch_tmdb_data("movie/top_rated", {"page": page})
 
 
 @app.route("/movie/upcoming/<int:page>", methods=["GET"])
 def get_upcoming_movies(page):
-    data, status_code = fetch_tmdb_data(
-        "movie/upcoming", {"page": page}
-    )
-    return jsonify(data), status_code
+    return fetch_tmdb_data("movie/upcoming", {"page": page})
 
 
 @app.route("/movie/<int:movie_id>/images", methods=["GET"])
 def get_movie_images(movie_id):
-    data, status_code = fetch_tmdb_data(f"movie/{movie_id}/images")
-    return jsonify(data), status_code
+    return fetch_tmdb_data(f"movie/{movie_id}/images")
 
 
 # tv shows
 @app.route("/tv/popular/<int:page>", methods=["GET"])
 def get_popular_tv(page):
-    data, status_code = fetch_tmdb_data(
-        "tv/popular", {"page": page}
-    )
-    return jsonify(data), status_code
+    return fetch_tmdb_data("tv/popular", {"page": page})
 
 
 @app.route("/tv/top_rated/<int:page>", methods=["GET"])
 def get_top_rated_tv(page):
-    data, status_code = fetch_tmdb_data(
-        "tv/top_rated", {"page": page}
-    )
-    return jsonify(data), status_code
+    return fetch_tmdb_data("tv/top_rated", {"page": page})
 
 
 # find
 @app.route("/search/multi/<string:query>/<int:page>", methods=["GET"])
 def search_multi(query, page):
-    if not query:
-        return jsonify({"error": "Query is required"}), 400
-
     data, status_code = fetch_tmdb_data(
         "search/multi", {"query": query, "page": page}
     )
-    return jsonify(data), status_code
+    return data, status_code
 
 
 @app.route("/search/movie/<string:query>/<int:page>", methods=["GET"])
-def search_movie(query, page=0):
+def search_movie(query, page=1):
     genres = request.args.get("genres")
-
-    if not query:
-        return jsonify({"error": "Query is required"}), 400
 
     data, status_code = fetch_tmdb_data(
         "search/movie", {"query": query, "page": page}
     )
 
     if status_code != 200:
-        return jsonify(data), status_code
+        return data, status_code
 
     movies = data.get("results", [])
 
@@ -262,7 +237,7 @@ def search_movie(query, page=0):
 
 
 @app.route("/search/tv/<string:query>/<int:page>", methods=["GET"])
-def search_tv(query, page):
+def search_tv(query, page=1):
     genres = request.args.get("genres")
 
     if not query:
@@ -273,7 +248,7 @@ def search_tv(query, page):
     )
 
     if status_code != 200:
-        return jsonify(data), status_code
+        return data, status_code
 
     shows = data.get("results", [])
 
@@ -288,5 +263,6 @@ def search_tv(query, page):
 
     return jsonify({"results": shows}), 200
 
-if _name_ == "_main_":
+
+if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
