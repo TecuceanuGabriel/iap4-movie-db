@@ -150,6 +150,18 @@ def get_configuration():
     return jsonify(data), status_code
 
 
+@app.route("/genre/movie/list", methods=["GET"])
+def get_movie_genres():
+    data, status_code = fetch_tmdb_data("genre/movie/list")
+    return jsonify(data), status_code
+
+
+@app.route("/genre/tv/list", methods=["GET"])
+def get_tv_genres():
+    data, status_code = fetch_tmdb_data("genre/tv/list")
+    return jsonify(data), status_code
+
+
 # movies
 @app.route("/movie/popular", methods=["GET"])
 def get_popular_movies():
@@ -198,7 +210,7 @@ def get_top_rated_tv():
     return jsonify(data), status_code
 
 
-# search
+# find
 @app.route("/search/multi", methods=["GET"])
 def search_multi():
     query = request.args.get("query")
@@ -210,6 +222,67 @@ def search_multi():
         "search/multi", {"query": query, "page": request.args.get("page")}
     )
     return jsonify(data), status_code
+
+
+@app.route("/search/movie", methods=["GET"])
+def search_movie():
+    query = request.args.get("query")
+    page = request.args.get("page")
+
+    genres = request.args.get("genres")
+
+    if not query:
+        return jsonify({"error": "Query is required"}), 400
+
+    data, status_code = fetch_tmdb_data(
+        "search/movie", {"query": query, "page": page}
+    )
+
+    if status_code != 200:
+        return jsonify(data), status_code
+
+    movies = data.get("results", [])
+
+    if genres:
+        genres = set(map(int, genres.split(",")))
+        movies = [
+            movie
+            for movie in movies
+            if genres.issubset(set(movie.get("genre_ids", [])))
+        ]
+
+    return jsonify({"results": movies}), 200
+
+
+@app.route("/search/tv", methods=["GET"])
+def search_tv():
+    query = request.args.get("query")
+    page = request.args.get("page")
+
+    genres = request.args.get("genres")
+
+    if not query:
+        return jsonify({"error": "Query is required"}), 400
+
+    data, status_code = fetch_tmdb_data(
+        "search/tv", {"query": query, "page": page}
+    )
+
+    if status_code != 200:
+        return jsonify(data), status_code
+
+    shows = data.get("results", [])
+
+    if genres:
+        genres = genres.split(",")
+        genres = set(map(int, genres))
+        shows = [
+            show
+            for show in shows
+            if genres.issubset(set(show.get("genre_ids", [])))
+        ]
+
+    return jsonify({"results": shows}), 200
 
 
 if __name__ == "__main__":
