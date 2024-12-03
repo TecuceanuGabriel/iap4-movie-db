@@ -1,27 +1,30 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory, redirect
 from flask_pymongo import PyMongo
+from flask_cors import CORS
 
 from dotenv import load_dotenv
 
 import jwt
 
-import os
-import datetime
 import requests
+import datetime
+import os
 
 from werkzeug.security import generate_password_hash, check_password_hash
 
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(_name_)
+CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+app.config["JWT_SECRET"] = os.environ.get("JWT_SECRET")
 
 app.config["MONGO_URI"] = os.environ.get("MONGO_URI")
-app.config["JWT_SECRET"] = os.environ.get("JWT_SECRET")
 
 mongo = PyMongo(app)
 
+TMDB_BASE_URL = "https://api.themoviedb.org/3"
+TMDB_API_KEY = os.environ.get("VITE_TMDB_KEY")
 
-# app
 def generate_token(email):
     return jwt.encode(
         {
@@ -43,11 +46,6 @@ def verify_token(token):
         return None, {"error": "Token expired"}
     except jwt.InvalidTokenError:
         return None, {"error": "Invalid token"}
-
-
-@app.route("/")
-def hello_world():
-    return "Discombobulated"
 
 
 @app.route("/register", methods=["POST"])
@@ -124,18 +122,13 @@ def get_profile():
 
     return jsonify(user), 200
 
-
-# tmdb
-TMDB_API_KEY = os.environ.get("TMDB_API_KEY")
-TMDB_BASE_URL = os.environ.get("TMDB_BASE_URL")
-
-
 def fetch_tmdb_data(endpoint, params=None):
+    endpoint.lstrip("/")
     url = f"{TMDB_BASE_URL}/{endpoint}"
     headers = {"Authorization": f"Bearer {TMDB_API_KEY}"}
     params = params or {}
 
-    response = requests.get(url, headers=headers, params=params)
+    response = requests.get(url, headers=headers, params=params, timeout=10)
     if response.status_code != 200:
         return {
             "error": f"TMDB API error: {response.text}"
@@ -151,7 +144,7 @@ def get_configuration():
 
 
 @app.route("/genre/movie/list", methods=["GET"])
-def get_movie_genres():
+def get_movie():
     data, status_code = fetch_tmdb_data("genre/movie/list")
     return jsonify(data), status_code
 
@@ -163,26 +156,45 @@ def get_tv_genres():
 
 
 # movies
-@app.route("/movie/popular", methods=["GET"])
-def get_popular_movies():
+@app.route("/movie/details/<int:movie_id>")
+def get_movie_details(movie_id, jsonify=True):
+    data, status_code = fetch_tmdb_data(f"movie/{movie_id}")
+    if status_code != 200:
+        return data["error"], status_code
+    if (jsonify):
+        return jsonify(data), status_code
+    else:
+        return data, status_code
+
+
+@app.route("/movie/popular/<int:page>", methods=["GET"])
+def get_popular_movies(page):
+    data, status_code = fetch_tmdb_data(f"movie/popular?page={page}")
+    if status_code != 200:
+        return data["error"], status_code
+
+    for result in data["results"]:
+        movie_details, movie_status_code = get_movie_details(result["id"], False)
+        if movie_status_code == 200:
+            result["runtime"] = movie_details["runtime"]
+        else:
+            result["runtime"] = None
+
+    return jsonify(data), status_code
+
+
+@app.route("/movie/top_rated/<int:page>", methods=["GET"])
+def get_top_rated_movies(page):
     data, status_code = fetch_tmdb_data(
-        "movie/popular", {"page": request.args.get("page")}
+        "movie/top_rated", {"page": page}
     )
     return jsonify(data), status_code
 
 
-@app.route("/movie/top_rated", methods=["GET"])
-def get_top_rated_movies():
+@app.route("/movie/upcoming/<int:page>", methods=["GET"])
+def get_upcoming_movies(page):
     data, status_code = fetch_tmdb_data(
-        "movie/top_rated", {"page": request.args.get("page")}
-    )
-    return jsonify(data), status_code
-
-
-@app.route("/movie/upcoming", methods=["GET"])
-def get_upcoming_movies():
-    data, status_code = fetch_tmdb_data(
-        "movie/upcoming", {"page": request.args.get("page")}
+        "movie/upcoming", {"page": page}
     )
     return jsonify(data), status_code
 
@@ -194,41 +206,36 @@ def get_movie_images(movie_id):
 
 
 # tv shows
-@app.route("/tv/popular", methods=["GET"])
-def get_popular_tv():
+@app.route("/tv/popular/<int:page>", methods=["GET"])
+def get_popular_tv(page):
     data, status_code = fetch_tmdb_data(
-        "tv/popular", {"page": request.args.get("page")}
+        "tv/popular", {"page": page}
     )
     return jsonify(data), status_code
 
 
-@app.route("/tv/top_rated", methods=["GET"])
-def get_top_rated_tv():
+@app.route("/tv/top_rated/<int:page>", methods=["GET"])
+def get_top_rated_tv(page):
     data, status_code = fetch_tmdb_data(
-        "tv/top_rated", {"page": request.args.get("page")}
+        "tv/top_rated", {"page": page}
     )
     return jsonify(data), status_code
 
 
 # find
-@app.route("/search/multi", methods=["GET"])
-def search_multi():
-    query = request.args.get("query")
-
+@app.route("/search/multi/<string:query>/<int:page>", methods=["GET"])
+def search_multi(query, page):
     if not query:
         return jsonify({"error": "Query is required"}), 400
 
     data, status_code = fetch_tmdb_data(
-        "search/multi", {"query": query, "page": request.args.get("page")}
+        "search/multi", {"query": query, "page": page}
     )
     return jsonify(data), status_code
 
 
-@app.route("/search/movie", methods=["GET"])
-def search_movie():
-    query = request.args.get("query")
-    page = request.args.get("page")
-
+@app.route("/search/movie/<string:query>/<int:page>", methods=["GET"])
+def search_movie(query, page=0):
     genres = request.args.get("genres")
 
     if not query:
@@ -254,11 +261,8 @@ def search_movie():
     return jsonify({"results": movies}), 200
 
 
-@app.route("/search/tv", methods=["GET"])
-def search_tv():
-    query = request.args.get("query")
-    page = request.args.get("page")
-
+@app.route("/search/tv/<string:query>/<int:page>", methods=["GET"])
+def search_tv(query, page):
     genres = request.args.get("genres")
 
     if not query:
@@ -284,6 +288,5 @@ def search_tv():
 
     return jsonify({"results": shows}), 200
 
-
-if __name__ == "__main__":
+if _name_ == "_main_":
     app.run(debug=True, host="0.0.0.0", port=5000)

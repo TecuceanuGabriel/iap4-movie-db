@@ -8,6 +8,7 @@ services:
       - backend
     environment:
       - VITE_API_URL=http://localhost:5000
+      - VITE_TMDB_KEY=eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIxODFjNjExNzcwZDI2NjQ0OWEyZGQ2ZmUwNzA4OTYzMyIsIm5iZiI6MTYzNTAwODQwMS43MTUwMDAyLCJzdWIiOiI2MTc0M2Y5MWI2YzI2NDAwMmE2ODc3ZTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.KHA23HDJii02_yUJYSj1kKG9Os0QR90CUvmZiGmJJJY
     networks:
       - client-server-network
     develop:
@@ -26,8 +27,10 @@ services:
     depends_on:
       - mongo
     environment:
+      - PYTHONUNBUFFERED=1
       - FLASK_ENV=development
       - MONGO_URI=mongodb://root:root@mongo:27017/data@?authSource=admin
+      - VITE_TMDB_KEY=eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIxODFjNjExNzcwZDI2NjQ0OWEyZGQ2ZmUwNzA4OTYzMyIsIm5iZiI6MTYzNTAwODQwMS43MTUwMDAyLCJzdWIiOiI2MTc0M2Y5MWI2YzI2NDAwMmE2ODc3ZTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.KHA23HDJii02_yUJYSj1kKG9Os0QR90CUvmZiGmJJJY
     networks:
       - client-server-network
       - server-database-network
@@ -43,9 +46,9 @@ services:
     image: mongo:latest
     ports:
       - "27017:27017"
-    # volumes:
-    #   - ./database:/data/db
-    #   - ./database/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    volumes:
+      - ./database:/data/db
+      - ./database/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     networks:
       - server-database-network
     environment:
