@@ -9,6 +9,7 @@ from app.routes.auth import auth
 from app.routes.protected import protected
 from app.routes.tmdb import tmdb
 
+
 def create_app():
     load_dotenv()
 
@@ -24,4 +25,3 @@ def create_app():
     app.register_blueprint(tmdb)
 
     return app
-

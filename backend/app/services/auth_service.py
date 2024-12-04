@@ -3,6 +3,7 @@ import datetime
 
 from app.config import Config
 
+
 def generate_token(email):
     return jwt.encode(
         {

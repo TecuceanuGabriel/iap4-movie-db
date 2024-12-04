@@ -32,6 +32,8 @@ def register():
             "username": username,
             "email": email,
             "password": hashed_password,
+            "movie_watchlist": [],
+            "tv_watchlist": [],
         }
     )
 
@@ -59,3 +61,28 @@ def login():
         return jsonify({"error": "Invalid password"}), 400
 
     return jsonify({"token": generate_token(email)}), 200
+
+
+@auth.route("/delete_account", methods=["POST"])
+def delete_account():
+    data = request.json
+
+    email = data.get("email")
+    password = data.get("password")
+
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+    if not password:
+        return jsonify({"error": "Password is required"}), 400
+
+    user = mongo.db.users.find_one({"email": email})
+
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    if not check_password_hash(user["password"], password):
+        return jsonify({"error": "Invalid password"}), 400
+
+    mongo.db.users.delete_one({"email": email})
+
+    return jsonify({"message": "User deleted successfully"}), 200
