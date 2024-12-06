@@ -11,11 +11,23 @@
 		"@sveltejs/adapter-auto": "^3.0.0",
 		"@sveltejs/kit": "^2.0.0",
 		"@sveltejs/vite-plugin-svelte": "^4.0.0",
+		"autoprefixer": "^10.4.20",
+		"bits-ui": "^0.21.16",
+		"clsx": "^2.1.1",
+		"embla-carousel-svelte": "^8.5.1",
 		"svelte": "^5.0.0",
+		"tailwind-merge": "^2.5.5",
+		"tailwind-variants": "^0.3.0",
+		"tailwindcss": "^3.4.9",
 		"vite": "^5.0.3"
 	},
 	"dependencies": {
 		"axios": "^1.7.7",
-		"dotenv": "^16.4.5"
-	}
+		"dotenv": "^16.4.5",
+		"embla-carousel-autoplay": "^8.5.1",
+		"lucide-svelte": "^0.466.0",
+		"svelte-radix": "^2.0.1",
+		"tailwind-easing-gradients": "^1.0.2"
+	},
+	"packageManager": "pnpm@9.14.4+sha512.c8180b3fbe4e4bca02c94234717896b5529740a6cbadf19fa78254270403ea2f27d4e1d46a08a0f56c89b63dc8ebfd3ee53326da720273794e6200fcf0d184ab"
 }

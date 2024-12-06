@@ -57,6 +57,16 @@ def get_movie_images(movie_id):
     return fetch_tmdb_data(f"movie/{movie_id}/images")
 
 
+@tmdb.route("/movie/<int:movie_id>/videos", methods=["GET"])
+def get_movie_videos(movie_id):
+    return fetch_tmdb_data(f"movie/{movie_id}/videos")
+
+
+@tmdb.route("/movie/<int:movie_id>/recommendations", methods=["GET"])
+def get_movie_recommendations(movie_id):
+    return fetch_tmdb_data(f"movie/{movie_id}/recommendations")
+
+
 # tv shows
 @tmdb.route("/tv/popular/<int:page>", methods=["GET"])
 def get_popular_tv(page):
@@ -66,6 +76,47 @@ def get_popular_tv(page):
 @tmdb.route("/tv/top_rated/<int:page>", methods=["GET"])
 def get_top_rated_tv(page):
     return fetch_tmdb_data("tv/top_rated", {"page": page})
+
+
+@tmdb.route("/tv/details/<int:show_id>")
+def get_tv_details(show_id):
+    return fetch_tmdb_data(f"tv/{show_id}")
+
+
+@tmdb.route("/tv/<int:show_id>/images")
+def get_tv_images(show_id):
+    return fetch_tmdb_data(f"tv/{show_id}/images")
+
+
+@tmdb.route("/tv/<int:show_id>/recommendations")
+def get_tv_recommendations(show_id):
+    return fetch_tmdb_data(f"tv/{show_id}/recommendations")
+
+
+# people
+@tmdb.route("/person/details/<int:person_id>")
+def get_person_details(person_id):
+    return fetch_tmdb_data(f"person/{person_id}")
+
+
+@tmdb.route("/person/popular")
+def get_popular_people():
+    return fetch_tmdb_data(f"person/popular")
+
+
+@tmdb.route("/person/<int:person_id>/images")
+def get_person_images(person_id):
+    return fetch_tmdb_data(f"person/{person_id}/images")
+
+
+@tmdb.route("/person/<int:person_id>/credits")
+def get_person_credits(person_id):
+    return fetch_tmdb_data(f"person/{person_id}/combined_credits")
+
+
+@tmdb.route("/person/<int:person_id>/tagged_images")
+def get_person_tagged_images(person_id):
+    return fetch_tmdb_data(f"person/{person_id}/tagged_images")
 
 
 # find
