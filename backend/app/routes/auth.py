@@ -33,11 +33,14 @@ def register():
             "email": email,
             "password": hashed_password,
             "movie_watchlist": [],
+            "movie_finished": [],
             "tv_watchlist": [],
+            "tv_finished": [],
+            "favourite_people": [],
         }
     )
 
-    return jsonify({"message": "User registered successfully"}), 201
+    return jsonify({"message": "User registered successfully", "token": generate_token(email)}), 201
 
 
 @auth.route("/login", methods=["POST"])
