@@ -68,16 +68,13 @@ export const imgSizeMedium = "w780"; // Use desired size: w300, w780, w1280, ori
 export const imgSizeBig = "w1280"; // Use desired size: w300, w780, w1280, original
 export const imgOriginal = "original"; // Use desired size: w300, w780, w1280, original
 export function redirectTo(path) {
+	if (path === '#')
+		return;
 	window.location.href = path;
 }
 
 export const topGradientSoftness = 30;
 export const bottomGradientSoftness = 0.5;
-export let primaryImageSize = 0;
-export const updateWindowHeight = () => {
-	let windowHeight = window.innerHeight;
-	primaryImageSize = Math.floor(windowHeight / 20);
-};
 
 let movieGenres = null;
 export async function getMovieGenres() {
@@ -128,36 +125,40 @@ export function clamp(num: number, lower: number, upper: number) {
 }
 
 export function formatCurrency(number) {
-	// Convert number to string and add commas for thousands
 	let formattedNumber = number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
-	// Append the dollar sign at the end
 	return `$${formattedNumber}`;
 }
 
 export function combineAndShuffle(arr1, arr2) {
-	// Combine the arrays
 	let combinedArray = [...arr1, ...arr2];
 
-	// Fisher-Yates shuffle algorithm
 	for (let i = combinedArray.length - 1; i > 0; i--) {
 		const j = Math.floor(Math.random() * (i + 1));
-		[combinedArray[i], combinedArray[j]] = [combinedArray[j], combinedArray[i]]; // Swap elements
+		[combinedArray[i], combinedArray[j]] = [combinedArray[j], combinedArray[i]];
 	}
 
 	return combinedArray;
 }
 
 export function shuffle(arr) {
-	// Loop through the array from the end to the beginning
 	for (let i = arr.length - 1; i > 0; i--) {
-		// Generate a random index between 0 and i (inclusive)
 		const j = Math.floor(Math.random() * (i + 1));
 
-		// Swap elements at index i and j
 		[arr[i], arr[j]] = [arr[j], arr[i]];
 	}
 
-	// Return the shuffled array
 	return arr;
+}
+
+export const getCookie = (name) => {
+	const cookies = document.cookie.split('; ');
+	const foundCookie = cookies.find((cookie) => cookie.startsWith(`${name}=`));
+	return foundCookie ? foundCookie.split('=')[1] : null;
+};
+
+export enum mediaStatus {
+	NONE,
+	WATCHLIST,
+	FINISHED,
 }

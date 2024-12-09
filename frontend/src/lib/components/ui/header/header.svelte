@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
     import {
         apiKey,
         imgBaseUrl,
@@ -6,43 +6,27 @@
         redirectTo,
         getMovieGenres,
         getTVGenres,
-    } from "$lib/utils.ts";
+        getCookie,
+        topGradientSoftness,
+    } from "$lib/utils";
     import { onMount } from "svelte";
     import { Input } from "$lib/components/ui/input/index.js";
     import { Button } from "$lib/components/ui/button/index.js";
-
-    import File from "lucide-svelte/icons/file";
-    import House from "lucide-svelte/icons/house";
-    import ChartLine from "lucide-svelte/icons/chart-line";
-    import ListFilter from "lucide-svelte/icons/list-filter";
-    import Ellipsis from "lucide-svelte/icons/ellipsis";
-    import Package from "lucide-svelte/icons/package";
-    import Package2 from "lucide-svelte/icons/package-2";
-    import PanelLeft from "lucide-svelte/icons/panel-left";
-    import CirclePlus from "lucide-svelte/icons/circle-plus";
-    import Search from "lucide-svelte/icons/search";
-    import Settings from "lucide-svelte/icons/settings";
-    import ShoppingCart from "lucide-svelte/icons/shopping-cart";
-    import UsersRound from "lucide-svelte/icons/users-round";
-
     import { Badge } from "$lib/components/ui/badge/index.js";
-    import * as Breadcrumb from "$lib/components/ui/breadcrumb/index.js";
-    import * as Card from "$lib/components/ui/card/index.js";
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
-    import * as Sheet from "$lib/components/ui/sheet/index.js";
-    import * as Table from "$lib/components/ui/table/index.js";
-    import * as Tabs from "$lib/components/ui/tabs/index.js";
-    import * as Tooltip from "$lib/components/ui/tooltip/index.js";
     import { ScrollArea } from "$lib/components/ui/scroll-area/index";
     import { Separator } from "$lib/components/ui/separator";
+    import { Auth } from "$lib/components/auth/index";
+    import Cookies from "js-cookie";
 
-    let searchQuery = "";
+    import Search from "lucide-svelte/icons/search";
+
+    let searchQuery = $state("");
     let timeout;
-    let searchResult = [];
-    let showResults = false;
+    let searchResult = $state([]);
+    let showResults = $state(false);
     let mediaGenres = new Map();
 
-    // Function that gets triggered when the input changes
     function handleInputChange(event) {
         // Clear the previous timeout to restart the debouncing
         clearTimeout(timeout);
@@ -118,42 +102,69 @@
         }, 1000);
     }
 
-    let searchBar;
-    onMount(async () => {
-        let movieGenresArray = await getMovieGenres();
-        let tvGenresArray = await getTVGenres();
-        movieGenresArray.forEach((element) => {
-            mediaGenres.set(element.id, element.name);
+    let isLoggedIn = $state(false);
+    const token = Cookies.get("token");
+    if (token) isLoggedIn = true;
+
+    let authPanel: Auth = $state();
+    let showAuth = $state(false);
+    function openAuth() {
+        showAuth = true;
+        authPanel.open();
+    }
+    function closeAuth() {
+        showAuth = false;
+        authPanel.close();
+    }
+
+    let searchBar = $state(null);
+    onMount(() => {
+        let movieGenresArray;
+        getMovieGenres().then((result) => {
+            movieGenresArray = result;
+            movieGenresArray.forEach((element) => {
+                mediaGenres.set(element.id, element.name);
+            });
         });
-        tvGenresArray.forEach((element) => {
-            mediaGenres.set(element.id, element.name);
+        let tvGenresArray;
+        getTVGenres().then((result) => {
+            tvGenresArray = result;
+            tvGenresArray.forEach((element) => {
+                mediaGenres.set(element.id, element.name);
+            });
         });
 
         document.addEventListener("click", (event) => {
-            if (!searchBar.contains(event.target)) showResults = false;
+            if (searchBar && !searchBar.contains(event.target))
+                showResults = false;
         });
-        return () => {
-            document.removeEventListener("click", handleClickOutside);
-        };
+
+        isLoggedIn = !(getCookie("token") === null);
+
+        return () => {};
     });
 </script>
 
-<header
-    class="relative z-10 w-full mr-auto ml-auto px-10 pt-8 z-30 flex items-start"
->
-    <div class="relative top-0 mr-auto text-left">
+<header class="relative z-10 w-full mx-auto px-10 pt-8 z-30 flex items-start">
+    <div
+        class="absolute top-[0vh] left-0 bg-easing-t-smooth_fade w-full"
+        style="height: {topGradientSoftness * 10}px"
+    ></div>
+
+    <div class="relative top-0 mx-auto text-left">
         <a
             href="/"
             style="font-family: 'Open Sans';
         font-weight: 700;">Taped</a
         >
     </div>
+
     <div bind:this={searchBar} class="relative flex-1 grow-0">
         <Search class="absolute left-2.5 top-2.5 h-4 w-4" />
         <Input
             type="search"
-            class="transition-all text-white border-none bg-background/5 focus:bg-background/40 w-full rounded-lg pl-8
-            w-[150px] sm:w-[300px] md:w-[400px] lg:w-[700px]"
+            class="transition text-white border-none bg-background/5 focus:bg-background/40 w-full rounded-lg pl-8
+            w-[35vw]"
             bind:value={searchQuery}
             on:input={handleInputChange}
             on:focus={() => (showResults = true)}
@@ -169,9 +180,9 @@
                         tabindex="0"
                         role="button"
                         class="cursor-pointer transition-all flex flex-row p-3 bg-rich_black/70 hover:bg-rich_black/40 text-white"
-                        on:click={() =>
+                        onclick={() =>
                             redirectTo(`/${result.type}/${result.id}`)}
-                        on:keydown={(event) => {
+                        onkeydown={(event) => {
                             if (event.key === "Enter") {
                                 redirectTo(`/${result.type}/${result.id}`);
                             }
@@ -247,32 +258,79 @@
             </ScrollArea>
         {/if}
     </div>
-    <div class="relative top-0 ml-auto">
-        <DropdownMenu.Root>
+
+    <div class="relative top-0 mx-auto">
+        <DropdownMenu.Root preventScroll={false}>
             <DropdownMenu.Trigger asChild let:builder>
                 <Button
                     builders={[builder]}
-                    variant="outline"
                     size="icon"
-                    class="overflow-hidden rounded-full"
+                    class="transition-colors overflow-hidden rounded-full bg-transparent border-2 border-transparent hover:border-white"
                 >
-                    <img
-                        src=""
-                        width={36}
-                        height={36}
-                        alt="Avatar"
-                        class="overflow-hidden rounded-full"
-                    />
+                    {#if true}
+                        <svg
+                            class="w-6 h-6 text-white"
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                fill-rule="evenodd"
+                                d="M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2 9a4 4 0 0 0-4 4v1a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1a4 4 0 0 0-4-4h-4Z"
+                                clip-rule="evenodd"
+                            />
+                        </svg>
+                    {:else}
+                        <img
+                            src=""
+                            width={36}
+                            height={36}
+                            alt="Avatar"
+                            class="overflow-hidden rounded-full"
+                        />
+                    {/if}
                 </Button>
             </DropdownMenu.Trigger>
-            <DropdownMenu.Content align="end">
-                <DropdownMenu.Label>My Account</DropdownMenu.Label>
-                <DropdownMenu.Separator />
-                <DropdownMenu.Item>Settings</DropdownMenu.Item>
-                <DropdownMenu.Item>Support</DropdownMenu.Item>
-                <DropdownMenu.Separator />
-                <DropdownMenu.Item>Logout</DropdownMenu.Item>
+            <DropdownMenu.Content
+                align="end"
+                class="bg-transparent text-white border-0 backdrop-blur-lg"
+            >
+                {#if isLoggedIn == true}
+                    <DropdownMenu.Label>My Account</DropdownMenu.Label>
+                    <DropdownMenu.Separator />
+                    <DropdownMenu.Item
+                        on:click={() => {
+                            Cookies.remove("token");
+                            window.location.reload();
+                        }}>Logout</DropdownMenu.Item
+                    >
+                {:else}
+                    <DropdownMenu.Item
+                        on:click={() => {
+                            authPanel.setLogin();
+                            openAuth();
+                        }}>Log in</DropdownMenu.Item
+                    >
+                    <DropdownMenu.Item
+                        on:click={() => {
+                            authPanel.setSignUp();
+                            openAuth();
+                        }}>Sign up</DropdownMenu.Item
+                    >
+                {/if}
             </DropdownMenu.Content>
         </DropdownMenu.Root>
+    </div>
+
+    <div class={showAuth == false ? "hidden" : ""}>
+        <Auth
+            bind:this={authPanel}
+            cancel={() => {
+                showAuth = false;
+            }}
+        ></Auth>
     </div>
 </header>

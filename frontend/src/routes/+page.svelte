@@ -17,12 +17,6 @@
   import * as Table from "$lib/components/ui/table";
   import * as Tooltip from "$lib/components/ui/tooltip";
 
-  let primaryImageSize = 0;
-  const updateWindowHeight = () => {
-    let windowHeight = window.innerHeight;
-    primaryImageSize = Math.floor(windowHeight / 20);
-  };
-
   const displayCount = 7;
   let films = null;
   let displayFilms = null;
@@ -35,6 +29,14 @@
   let mostPopularFilm = null;
   let primaryImageUrl = null;
 
+  let primaryImageSize = 50;
+  let windowHeight;
+  let windowWidth;
+  const updateWindowSize = () => {
+    windowHeight = window.innerHeight;
+    windowWidth = window.innerWidth;
+  };
+
   function cycleFilm() {
     currentIndex = (currentIndex + 1) % films.length;
     mostPopularFilm = films[currentIndex];
@@ -44,8 +46,8 @@
   let mediaGenres = new Map();
   let interval;
   onMount(async () => {
-    updateWindowHeight();
-    window.addEventListener("resize", updateWindowHeight);
+    updateWindowSize();
+    window.addEventListener("resize", updateWindowSize);
 
     let movieGenresArray = await getMovieGenres();
     let tvGenresArray = await getTVGenres();
@@ -130,7 +132,7 @@
       });
 
     return () => {
-      window.removeEventListener("resize", updateWindowHeight);
+      window.removeEventListener("resize", updateWindowSize);
     };
   });
 </script>
@@ -146,11 +148,6 @@
       easing: cubicInOut,
     }}
   >
-    <div
-      class="absolute top-[0vh] bg-easing-t-smooth_fade w-full"
-      style="height: {topGradientSoftness}vh"
-    ></div>
-
     <div
       class="absolute w-full bg-easing-b-smooth_fade"
       style="bottom: 0rem;
@@ -169,7 +166,7 @@
 
     {#if mostPopularFilm != null}
       <div
-        class="absolute left-[15vw] full drop-shadow-lg w-fit flex flex-col bottom-0 pb-[5vw]"
+        class="absolute left-[15vw] full drop-shadow-lg w-fit flex flex-col bottom-0 pb-[5vh]"
       >
         <a
           class="relative
@@ -199,7 +196,7 @@
 <div class="relative flex flex-col mx-[15vw] mt-[75vh]">
   {#if films !== null && films.length > 0}
     <h1
-      class="text-4xl w-fit h-fit mb-3"
+      class="w-fit h-fit mb-3 sm:text-xl md:text-2xl lg:text-4xl"
       style="font-family: 'Open Sans';
              font-weight: 600;"
     >
@@ -209,7 +206,7 @@
       {#each displayFilms as film}
         <Tooltip.Root>
           <Tooltip.Trigger
-            class="transition-all max-w-[8vw] mr-auto rounded-sm border-2 border-transparent hover:border-uranium_blue"
+            class="transition max-w-[8vw] mr-auto rounded-sm border-2 border-transparent hover:border-munsell_blue"
           >
             <button
               on:click={() => {
@@ -230,7 +227,7 @@
 
   {#if shows !== null && shows.length > 0}
     <h1
-      class="text-4xl w-fit h-fit mb-3"
+      class="w-fit h-fit mb-3 sm:text-xl md:text-2xl lg:text-4xl"
       style="font-family: 'Open Sans';
          font-weight: 600;"
     >
@@ -240,7 +237,7 @@
       {#each displayShows as show}
         <Tooltip.Root>
           <Tooltip.Trigger
-            class="transition-all max-w-[8vw] mr-auto rounded-sm border-2 border-transparent hover:border-uranium_blue"
+            class="transition max-w-[8vw] mr-auto rounded-sm border-2 border-transparent hover:border-uranium_blue"
           >
             <button
               on:click={() => {
@@ -261,7 +258,7 @@
 
   {#if people !== null && people.length > 0}
     <h1
-      class="text-4xl w-fit h-fit mb-3"
+      class="w-fit h-fit mb-3 sm:text-xl md:text-2xl lg:text-4xl"
       style="font-family: 'Open Sans';
      font-weight: 600;"
     >
@@ -271,7 +268,7 @@
       {#each displayPeople as people}
         <Tooltip.Root>
           <Tooltip.Trigger
-            class="transition-all max-w-[8vw] mr-auto rounded-sm border-2 border-transparent hover:border-uranium_blue"
+            class="transition max-w-[8vw] mr-auto rounded-sm border-2 border-transparent hover:border-uranium_blue"
           >
             <button
               on:click={() => {

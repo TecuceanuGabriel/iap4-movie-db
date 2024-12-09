@@ -8,7 +8,6 @@
         imgOriginal,
         topGradientSoftness,
         bottomGradientSoftness,
-        updateWindowHeight,
         clamp,
         formatCurrency,
         imgSizeSmall,
@@ -26,11 +25,18 @@
     let show = null;
     let images = null;
     let recs = null;
+
     let primaryImageSize = 50;
+    let windowHeight;
+    let windowWidth;
+    const updateWindowSize = () => {
+        windowHeight = window.innerHeight;
+        windowWidth = window.innerWidth;
+    };
 
     onMount(async () => {
-        updateWindowHeight();
-        window.addEventListener("resize", updateWindowHeight);
+        updateWindowSize();
+        window.addEventListener("resize", updateWindowSize);
 
         try {
             const response = await fetch(`${apiKey}/tv/details/${showID}`);
@@ -93,7 +99,7 @@
         }
 
         return () => {
-            window.removeEventListener("resize", updateWindowHeight);
+            window.removeEventListener("resize", updateWindowSize);
         };
     });
 </script>
@@ -105,11 +111,6 @@
                font-family: 'Open Sans';
                background-image: url('{show.backdropUrl}');"
     >
-        <div
-            class="absolute top-[0vh] bg-easing-t-smooth_fade w-full"
-            style="height: {topGradientSoftness}vh"
-        ></div>
-
         <div
             class="absolute w-full bg-easing-b-smooth_fade"
             style="bottom: 0rem;

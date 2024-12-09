@@ -66,6 +66,10 @@ def get_movie_videos(movie_id):
 def get_movie_recommendations(movie_id):
     return fetch_tmdb_data(f"movie/{movie_id}/recommendations")
 
+@tmdb.route("/movie/<int:movie_id>/similar", methods=["GET"])
+def get_movie_similar(movie_id):
+    return fetch_tmdb_data(f"movie/{movie_id}/similar")
+
 
 # tv shows
 @tmdb.route("/tv/popular/<int:page>", methods=["GET"])
@@ -91,6 +95,10 @@ def get_tv_images(show_id):
 @tmdb.route("/tv/<int:show_id>/recommendations")
 def get_tv_recommendations(show_id):
     return fetch_tmdb_data(f"tv/{show_id}/recommendations")
+
+@tmdb.route("/tv/<int:show_id>/similar")
+def get_tv_similiar(show_id):
+    return fetch_tmdb_data(f"tv/{show_id}/similar")
 
 
 # people
