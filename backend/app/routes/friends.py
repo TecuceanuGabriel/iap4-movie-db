@@ -305,7 +305,7 @@ def get_friend_profile():
     email = payload.get("email")
 
     if not mongo.db.users.find_one({"email": friend_email}):  # check if friend exists
-        return jsonify({"error": "Friend not found"}), 404'
+        return jsonify({"error": "Friend not found"}), 404
 
     if not mongo.db.friendship.find_one(
         {
