@@ -40,7 +40,15 @@ def register():
         }
     )
 
-    return jsonify({"message": "User registered successfully", "token": generate_token(email)}), 201
+    return (
+        jsonify(
+            {
+                "message": "User registered successfully",
+                "token": generate_token(email),
+            }
+        ),
+        201,
+    )
 
 
 @auth.route("/login", methods=["POST"])
@@ -85,6 +93,13 @@ def delete_account():
 
     if not check_password_hash(user["password"], password):
         return jsonify({"error": "Invalid password"}), 400
+
+    mongo.db.friendship.delete_many(
+        {"$or": [{"sender": email}, {"recipient": email}]}
+    )
+    mongo.db.fd_requests.delete_many(
+        {"$or": [{"sender": email}, {"recipient": email}]}
+    )
 
     mongo.db.users.delete_one({"email": email})
 
