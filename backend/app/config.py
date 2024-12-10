@@ -6,3 +6,5 @@ class Config(object):
     JWT_SECRET = os.environ.get("JWT_SECRET")
     TMDB_BASE_URL = os.environ.get("TMDB_BASE_URL")
     TMDB_API_KEY = os.environ.get("TMDB_API_KEY")
+    SCHEDULER_API_ENABLED = True
+    SCHEDULER_TIMEZONE = "UTC"
