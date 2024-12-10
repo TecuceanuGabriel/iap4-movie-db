@@ -233,3 +233,102 @@ def remove_friend():
     )
 
     return jsonify({"message": "Friend removed"}), 200
+
+
+@friends.route("/friends/is_friend", methods=["POST"])
+def is_friend():
+    data = request.get_json()
+    friend_email = data.get("email")
+
+    if not friend_email:
+        return jsonify({"error": "Friend email is required"}), 400
+
+    token = request.headers.get("Authorization")
+    if not token:
+        return jsonify({"error": "Token is required"}), 400
+
+    token = token.split(" ")[1]
+
+    payload, error = verify_token(token)
+
+    if error:
+        return jsonify(error), 400
+
+    email = payload.get("email")
+
+    if mongo.db.friendship.find_one(
+        {
+            "$or": [
+                {"sender": email, "recipient": friend_email},
+                {"sender": friend_email, "recipient": email},
+            ]
+        }
+    ):
+        return jsonify({"message": "Friendship exists"}), 200
+
+    return jsonify({"message": "Friendship does not exist"}), 404
+
+
+@friends.route("/get_all", methods=["GET"])
+def get_all_users():
+    users = mongo.db.users.find(
+        {},
+        {
+            "_id": 0,
+            "password": 0,
+            "email": 0,
+            "favourite_people": 0,
+            "movie_finished": 0,
+            "movie_watchlist": 0,
+            "tv_finished": 0,
+            "tv_watchlist": 0,
+        },
+    )
+
+    return jsonify(list(users)), 200
+
+@friends.route("/friends/get_friend_profile", methods=["POST"])
+def get_friend_profile():
+    data = request.get_json()
+    friend_email = data.get("email")
+
+    token = request.headers.get("Authorization")
+    if not token:
+        return jsonify({"error": "Token is required"}), 400
+
+    token = token.split(" ")[1]
+
+    payload, error = verify_token(token)
+    if error:
+        return jsonify(error), 400
+
+    email = payload.get("email")
+
+    if not mongo.db.users.find_one({"email": friend_email}):  # check if friend exists
+        return jsonify({"error": "Friend not found"}), 404'
+
+    if not mongo.db.friendship.find_one(
+        {
+            "$or": [
+                {"sender": email, "recipient": friend_email},
+                {"sender": friend_email, "recipient": email},
+            ]
+        }
+    ):
+        return jsonify({"error": "Friendship does not exist"}), 404
+
+    friend = mongo.db.users.find_one(
+        {"email": friend_email},
+        {
+            "_id": 0,
+            "password": 0,
+            "email": 0,
+            # "favourite_people": 0,
+            # "movie_finished": 0,
+            # "movie_watchlist": 0,
+            # "tv_finished": 0,
+            # "tv_watchlist": 0,
+        },
+    )
+
+    return jsonify(friend), 200
