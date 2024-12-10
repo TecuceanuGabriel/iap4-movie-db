@@ -50,6 +50,7 @@ pylint-report.txt
 .vscode/
 *.swp
 *.swo
+pyrightconfig.json
 
 # Sensitive files
 *.env
