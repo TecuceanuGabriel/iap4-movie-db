@@ -31,9 +31,6 @@ def create_app():
     app.register_blueprint(tmdb)
     app.register_blueprint(friends)
 
-    @app.teardown_appcontext
-    def cleanup(exception):
-        mongo.cx.close()
-        scheduler.shutdown(wait=True)
+    print('Starting tasks...')
 
     return app
