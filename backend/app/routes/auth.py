@@ -3,6 +3,11 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from app.extensions import mongo
 from app.services.auth_service import generate_token
+from app.services.feed_service import add_to_friends_feed_thread
+
+from app.models.feed_item import FeedItem
+
+from datetime import datetime
 
 auth = Blueprint("auth", __name__)
 
@@ -37,6 +42,7 @@ def register():
             "tv_watchlist": [],
             "tv_finished": [],
             "favourite_people": [],
+            "feed": [],
         }
     )
 
@@ -93,6 +99,11 @@ def delete_account():
 
     if not check_password_hash(user["password"], password):
         return jsonify({"error": "Invalid password"}), 400
+
+    add_to_friends_feed_thread(
+        email,
+        FeedItem(email, "has deleted their account", datetime.now()),
+    )
 
     mongo.db.friendship.delete_many(
         {"$or": [{"sender": email}, {"recipient": email}]}

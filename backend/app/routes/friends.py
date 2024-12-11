@@ -2,8 +2,12 @@ from flask import Blueprint, request, jsonify
 
 from app.extensions import mongo
 from app.services.auth_service import verify_token
+from app.services.feed_service import add_to_feed_thread
+
+from app.models.feed_item import FeedItem
 
 from datetime import datetime
+
 
 friends = Blueprint("friends", __name__)
 
@@ -70,6 +74,11 @@ def send_friend_request():
             "status": "pending",
             "created_at": datetime.now(),
         }
+    )
+
+    add_to_feed_thread(
+        recipient_email,
+        FeedItem(sender_email, "sent you a friend request", datetime.now()),
     )
 
     return jsonify({"message": "Friend request sent"}), 200
@@ -149,7 +158,7 @@ def respond_to_friend_request():
     ):
         return jsonify({"error": "Already responded to request"}), 400
 
-    if response == "accept":  # TODO: delete after interval?
+    if response == "accept":
         mongo.db.fd_requests.update_one(
             {"sender": sender_email, "recipient": recipient_email},
             {"$set": {"status": "accepted"}},
@@ -161,11 +170,20 @@ def respond_to_friend_request():
                 "since": datetime.now(),
             }
         )
-    else:  # TODO: delete after interval?
+    else:
         mongo.db.fd_requests.update_one(
             {"sender": sender_email, "recipient": recipient_email},
             {"$set": {"status": "rejected"}},
         )
+
+    add_to_feed_thread(
+        sender_email,
+        FeedItem(
+            recipient_email,
+            "has " + response + "ed your friend request",
+            datetime.now(),
+        ),
+    )
 
     return jsonify({"message": "Friend request " + response + "ed"}), 200
 
@@ -232,6 +250,11 @@ def remove_friend():
         }
     )
 
+    add_to_feed_thread(
+        friend_email,
+        FeedItem(email, "has removed you as a friend", datetime.now()),
+    )
+
     return jsonify({"message": "Friend removed"}), 200
 
 
@@ -269,24 +292,6 @@ def is_friend():
     return jsonify({"message": "Friendship does not exist"}), 404
 
 
-@friends.route("/get_all", methods=["GET"])
-def get_all_users():
-    users = mongo.db.users.find(
-        {},
-        {
-            "_id": 0,
-            "password": 0,
-            "email": 0,
-            "favourite_people": 0,
-            "movie_finished": 0,
-            "movie_watchlist": 0,
-            "tv_finished": 0,
-            "tv_watchlist": 0,
-        },
-    )
-
-    return jsonify(list(users)), 200
-
 @friends.route("/friends/get_friend_profile", methods=["POST"])
 def get_friend_profile():
     data = request.get_json()
@@ -304,7 +309,9 @@ def get_friend_profile():
 
     email = payload.get("email")
 
-    if not mongo.db.users.find_one({"email": friend_email}):  # check if friend exists
+    if not mongo.db.users.find_one(
+        {"email": friend_email}
+    ):  # check if friend exists
         return jsonify({"error": "Friend not found"}), 404
 
     if not mongo.db.friendship.find_one(
@@ -332,3 +339,23 @@ def get_friend_profile():
     )
 
     return jsonify(friend), 200
+
+
+@friends.route("/get_all", methods=["GET"])
+def get_all_users():
+    users = mongo.db.users.find(
+        {},
+        {
+            "_id": 0,
+            "password": 0,
+            "email": 0,
+            "favourite_people": 0,
+            "movie_finished": 0,
+            "movie_watchlist": 0,
+            "tv_finished": 0,
+            "tv_watchlist": 0,
+            "feed": 0,
+        },
+    )
+
+    return jsonify(list(users)), 200

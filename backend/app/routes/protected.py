@@ -1,7 +1,13 @@
+from re import I
 from flask import Blueprint, request, jsonify
 
 from app.extensions import mongo
 from app.services.auth_service import verify_token
+from app.services.feed_service import add_to_friends_feed_thread
+
+from app.models.feed_item import FeedItem
+
+from datetime import datetime
 
 protected = Blueprint("protected", __name__)
 
@@ -22,9 +28,7 @@ def get_profile():
 
     email = payload["email"]
 
-    user = mongo.db.users.find_one(
-        {"email": email}, {"password": 0, "_id": 0, "watchlist": 0}
-    )
+    user = mongo.db.users.find_one({"email": email}, {"password": 0, "_id": 0})
 
     return jsonify(user), 200
 
@@ -65,6 +69,15 @@ def add_to_watchlist(movie_id):
         {"$set": {"movie_watchlist": watchlist}},
     )
 
+    add_to_friends_feed_thread(
+        email,
+        FeedItem(
+            email,
+            f"added {movie_id} to their watchlist",
+            datetime.now(),
+        ),
+    )
+
     return jsonify({"message": "Movie added to watchlist"}), 200
 
 
@@ -102,15 +115,20 @@ def add_to_finished(movie_id):
     if movie_id in watchlist:
         remove_from_watchlist(movie_id)
 
-    finished.append({
-        "movie_id": movie_id,
-        "rating": 0,
-        "review": ""
-    })
+    finished.append({"movie_id": movie_id, "rating": 0, "review": ""})
 
     mongo.db.users.update_one(
         {"email": email},
         {"$set": {"movie_finished": finished}},
+    )
+
+    add_to_friends_feed_thread(
+        email,
+        FeedItem(
+            email,
+            f"finished watching {movie_id}",
+            datetime.now(),
+        ),
     )
 
     return jsonify({"message": "Movie added to finished"}), 200
@@ -181,7 +199,9 @@ def remove_from_finished(movie_id):
 
     finished = user.get("movie_finished", [])
 
-    movie_to_remove = next((movie for movie in finished if movie.get("movie_id") == movie_id), None)
+    movie_to_remove = next(
+        (movie for movie in finished if movie.get("movie_id") == movie_id), None
+    )
 
     if not movie_to_remove:
         return jsonify({"error": "Movie not in finished"}), 400
@@ -343,6 +363,15 @@ def add_tv_to_watchlist(show_id):
         {"$set": {"tv_watchlist": watchlist}},
     )
 
+    add_to_friends_feed_thread(
+        email,
+        FeedItem(
+            email,
+            f"added {show_id} to their watchlist",
+            datetime.now(),
+        ),
+    )
+
     return jsonify({"message": "TV show added to watchlist"}), 200
 
 
@@ -380,15 +409,20 @@ def add_tv_to_finished(show_id):
     if show_id in watchlist:
         remove_tv_from_watchlist(show_id)
 
-    finished.append({
-        "show_id": show_id,
-        "rating": 0,
-        "review": ""
-    })
+    finished.append({"show_id": show_id, "rating": 0, "review": ""})
 
     mongo.db.users.update_one(
         {"email": email},
         {"$set": {"tv_finished": finished}},
+    )
+
+    add_to_friends_feed_thread(
+        email,
+        FeedItem(
+            email,
+            f"finished watching {show_id}",
+            datetime.now(),
+        ),
     )
 
     return jsonify({"message": "TV show added to finished"}), 200
@@ -459,7 +493,9 @@ def remove_tv_from_finished(show_id):
 
     finished = user.get("tv_finished", [])
 
-    show_to_remove = next((movie for movie in finished if movie.get("show_id") == show_id), None)
+    show_to_remove = next(
+        (movie for movie in finished if movie.get("show_id") == show_id), None
+    )
 
     if not show_to_remove:
         return jsonify({"error": "TV show not in finished"}), 400
@@ -563,6 +599,15 @@ def add_favourite_person(person_id):
         {"$set": {"favourite_people": favourite}},
     )
 
+    add_to_friends_feed_thread(
+        email,
+        FeedItem(
+            email,
+            f"added {person_id} to their favourites",
+            datetime.now(),
+        ),
+    )
+
     return jsonify({"message": "Person favourited"}), 200
 
 
@@ -630,6 +675,7 @@ def get_favourite_people():
 
     return jsonify(people), 200
 
+
 @protected.route("/favourite/people/<int:person_id>", methods=["GET"])
 def is_favourite_person(person_id):
     token = request.headers.get("Authorization")
@@ -659,7 +705,10 @@ def is_favourite_person(person_id):
     return jsonify({"success": False}), 200
 
 
-@protected.route("/finished/movie/<int:movie_id>/rate/<float(signed=False):score>", methods=["POST"])
+@protected.route(
+    "/finished/movie/<int:movie_id>/rate/<float(signed=False):score>",
+    methods=["POST"],
+)
 def change_movie_rating(movie_id, score):
     token = request.headers.get("Authorization")
 
@@ -682,7 +731,9 @@ def change_movie_rating(movie_id, score):
 
     finished = user.get("movie_finished", [])
 
-    movie_entry = next((movie for movie in finished if movie.get("movie_id") == movie_id), None)
+    movie_entry = next(
+        (movie for movie in finished if movie.get("movie_id") == movie_id), None
+    )
 
     if not movie_entry:
         return jsonify({"error": "Movie not found in finished list"}), 404
@@ -700,10 +751,16 @@ def change_movie_rating(movie_id, score):
         {"$set": {"movie_finished": finished}},
     )
 
-    return jsonify({"message": f"Rating updated to {score} for movie {movie_id}"}), 200
+    return (
+        jsonify({"message": f"Rating updated to {score} for movie {movie_id}"}),
+        200,
+    )
 
 
-@protected.route("/finished/show/<int:show_id>/rate/<float(signed=False):score>", methods=["GET"])
+@protected.route(
+    "/finished/show/<int:show_id>/rate/<float(signed=False):score>",
+    methods=["GET"],
+)
 def change_show_rating(show_id, score):
     token = request.headers.get("Authorization")
 
@@ -726,7 +783,9 @@ def change_show_rating(show_id, score):
 
     finished = user.get("tv_finished", [])
 
-    show_entry = next((show for show in finished if show.get("show_id") == show_id), None)
+    show_entry = next(
+        (show for show in finished if show.get("show_id") == show_id), None
+    )
 
     if not show_entry:
         return jsonify({"error": "Show not found in finished list"}), 404
@@ -741,7 +800,10 @@ def change_show_rating(show_id, score):
         {"$set": {"tv_finished": finished}},
     )
 
-    return jsonify({"message": f"Rating updated to {score} for show {show_id}"}), 200
+    return (
+        jsonify({"message": f"Rating updated to {score} for show {show_id}"}),
+        200,
+    )
 
 
 @protected.route("/finished/movie/<int:movie_id>/review", methods=["POST"])
@@ -773,7 +835,9 @@ def change_movie_review(movie_id):
 
     finished = user.get("movie_finished", [])
 
-    movie_entry = next((movie for movie in finished if movie.get("movie_id") == movie_id), None)
+    movie_entry = next(
+        (movie for movie in finished if movie.get("movie_id") == movie_id), None
+    )
 
     if not movie_entry:
         return jsonify({"error": "Movie not found in finished list"}), 404
@@ -818,7 +882,9 @@ def change_tv_review(show_id):
     finished = user.get("tv_finished", [])
 
     # Find the show entry by matching the show_id
-    show_entry = next((show for show in finished if show.get("show_id") == show_id), None)
+    show_entry = next(
+        (show for show in finished if show.get("show_id") == show_id), None
+    )
 
     if not show_entry:
         return jsonify({"error": "Show not found in finished list"}), 404
