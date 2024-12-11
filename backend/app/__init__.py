@@ -31,6 +31,4 @@ def create_app():
     app.register_blueprint(tmdb)
     app.register_blueprint(friends)
 
-    print('Starting tasks...')
-
     return app

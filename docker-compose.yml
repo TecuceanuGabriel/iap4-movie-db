@@ -30,6 +30,10 @@ services:
       - FLASK_ENV=development
       - MONGO_URI=mongodb://root:root@mongo:27017/data@?authSource=admin
       - TMDB_BASE_URL=https://api.themoviedb.org/3
+      - SCHEDULER_API_ENABLED=True
+      - SCHEDULER_TIMEZONE=UTC
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     networks:
       - client-server-network
       - server-database-network
@@ -54,6 +58,21 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=root
       - MONGO_INITDB_DATABASE=data
+
+  redis:
+    build:
+      context: ./redis
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - server-database-network
+
+volumes:
+  redis-data:
+    driver: local
+
 
 networks:
   client-server-network:
