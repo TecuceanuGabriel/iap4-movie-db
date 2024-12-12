@@ -759,7 +759,7 @@ def change_movie_rating(movie_id, score):
 
 @protected.route(
     "/finished/show/<int:show_id>/rate/<float(signed=False):score>",
-    methods=["GET"],
+    methods=["POST"],
 )
 def change_show_rating(show_id, score):
     token = request.headers.get("Authorization")

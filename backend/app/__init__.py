@@ -23,6 +23,11 @@ def create_app():
     CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 
     mongo.init_app(app)
+
+    # WARNING!!!: DROP DATABASE
+    drop_database()
+    # WARNING!!!
+
     scheduler.init_app(app)
     scheduler.start()
 
@@ -32,3 +37,8 @@ def create_app():
     app.register_blueprint(friends)
 
     return app
+
+def drop_database():
+    mongo.db.users.drop()
+    mongo.db.friendship.drop()
+    mongo.db.fd_requests.drop()
