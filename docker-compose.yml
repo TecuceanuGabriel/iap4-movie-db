@@ -25,6 +25,7 @@ services:
       - "5000:5000"
     depends_on:
       - mongo
+      - redis
     environment:
       - PYTHONUNBUFFERED=1
       - FLASK_ENV=development
@@ -37,6 +38,7 @@ services:
     networks:
       - client-server-network
       - server-database-network
+      - faker-network
     develop:
       watch:
         - action: sync+restart
@@ -67,7 +69,17 @@ services:
     ports:
       - "6379:6379"
     networks:
-      - server-database-network
+      - faker-network
+
+  faker:
+    build:
+      context: ./faker
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - backend
+    networks:
+      - client-server-network
 
 volumes:
   redis-data:
@@ -78,4 +90,6 @@ networks:
   client-server-network:
     driver: bridge
   server-database-network:
+    driver: bridge
+  faker-network:
     driver: bridge
