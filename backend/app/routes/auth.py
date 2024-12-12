@@ -11,6 +11,7 @@ from datetime import datetime
 
 auth = Blueprint("auth", __name__)
 
+
 @auth.route("/register", methods=["POST"])
 def register():
     data = request.json
