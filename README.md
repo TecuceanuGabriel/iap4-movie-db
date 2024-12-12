@@ -32,6 +32,11 @@ environment variable in the `docker-compose.yml` file.
 
 WARNING!!!: The server drops the database every time it starts.
 
+## MONGO credentials
+
+- username: root
+- password: example
+
 # Technologies used
 
 - Svelte: the frontend (single page application)
