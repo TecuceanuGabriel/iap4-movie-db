@@ -35,7 +35,7 @@ WARNING!!!: The server drops the database every time it starts.
 ## MONGO credentials
 
 - username: root
-- password: example
+- password: root
 
 # Technologies used
 
