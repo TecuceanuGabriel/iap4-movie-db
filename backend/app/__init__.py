@@ -10,11 +10,16 @@ from app.routes.auth import auth
 from app.routes.protected import protected
 from app.routes.tmdb import tmdb
 from app.routes.friends import friends
+from app.routes.info import info
+from app.routes.lists import lists
 
 from app.tasks import clear_friend_reqeuests_task
 
 
 def create_app():
+    """Create the flask app, initialize the database and the scheduler and
+    register the blueprints"""
+
     load_dotenv()
 
     app = Flask(__name__)
@@ -35,8 +40,11 @@ def create_app():
     app.register_blueprint(protected)
     app.register_blueprint(tmdb)
     app.register_blueprint(friends)
+    app.register_blueprint(info)
+    app.register_blueprint(lists)
 
     return app
+
 
 def drop_database():
     mongo.db.users.drop()

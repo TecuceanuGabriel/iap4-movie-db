@@ -1,3 +1,11 @@
+"""
+This script is used to populate the database with random data. It creates users,
+friendships between them and populates their watchlists and favourite people lists 
+with random movies, tv shows and people. It also adds some of them to the 
+finished lists with a rating and a review. It uses the Faker library to generate 
+random data, and logs the operations to a file.
+"""
+
 from faker import Faker
 
 import requests
@@ -10,12 +18,14 @@ USER_COUNT = int(os.environ.get("USER_COUNT", 10))
 
 fake = Faker()
 
-log = open("/app/logs/log.txt", "w")
+log = open("/app/logs/faker_log.txt", "w")
 
 users = []
 
 
 def create_user():
+    """Create a new user, add it to the users list and log the operation."""
+
     username = fake.user_name()
     email = fake.email()
     password = fake.password()
@@ -31,15 +41,28 @@ def create_user():
         return
 
     log.write(f"User {username} created with email {email} and password {password}\n")
+
     users.append(body)
 
 
 def create_users():
+    """Create USER_COUNT number of users."""
+
     for _ in range(USER_COUNT):
         create_user()
 
 
 def login(email, password):
+    """Login and return the authentication token.
+
+    Parameters:
+        email (str): The email of the user.
+        password (str): The password of the user.
+
+    Returns:
+        str: The authentication token or None.
+    """
+
     body = {"email": email, "password": password}
 
     response = requests.post(f"{BASE_URL}/login", json=body)
@@ -47,16 +70,24 @@ def login(email, password):
     if response.status_code != 200:
         return None
 
-    token = response.json()["token"]
-    return token
+    return response.json()["token"]
 
 
 fd_requests = []
 
 
-def send_friend_request(user, friend, token):
+def send_friend_request(sender, receiver, token):
+    """Send a friend request from sender to receiver, add the request to
+    fd_requests and log the operation.
+
+    Parameters:
+        sender (dict): The sender of the friend request (must contain email).
+        receiver (dict): The receiver of the friend request (must contain email).
+        token (str): The authentication token of the sender.
+    """
+
     body = {
-        "email": friend["email"],
+        "email": receiver["email"],
     }
 
     headers = {"Authorization": f"Bearer {token}"}
@@ -65,18 +96,23 @@ def send_friend_request(user, friend, token):
 
     if response.status_code != 200:
         log.write(
-            f"{user['email']} couldn't send friend request to {friend['email']}\n"
+            f"{sender['email']} couldn't send friend request to {receiver['email']}\n"
         )
         return
 
-    log.write(f"{user['email']} sent friend request to {friend['email']}\n")
-    fd_requests.append({"sender": user, "recipient": friend})
+    log.write(f"{sender['email']} sent friend request to {receiver['email']}\n")
 
-
-friendships = []
+    fd_requests.append({"sender": sender, "recipient": receiver})
 
 
 def process_friend_request(request):
+    """Chose randomly to accept or reject the friend request and log the
+    operation.
+
+    Parameters:
+        request (dict): The friend request to process.
+    """
+
     sender = request["sender"]
     recipient = request["recipient"]
 
@@ -85,11 +121,11 @@ def process_friend_request(request):
     if token is None:
         return
 
-    response = fake.random_element(["accept", "reject"])
+    decision = fake.random_element(["accept", "reject"])
 
     body = {
         "email": sender["email"],
-        "response": response,
+        "response": decision,
     }
 
     headers = {"Authorization": f"Bearer {token}"}
@@ -102,8 +138,7 @@ def process_friend_request(request):
         )
         return
 
-    if response == "accept":
-        friendships.append({"user1": sender, "user2": recipient})
+    if decision == "accept":
         log.write(
             f"Friend request between {sender['email']} and {recipient['email']} accepted\n"
         )
@@ -115,6 +150,9 @@ def process_friend_request(request):
 
 
 def create_frienships():
+    """Iterate over the users list and send friend requests to random users.
+    After that iterate over fd_requests and process the them."""
+
     for user in users:
         token = login(user["email"], user["password"])
         if token is None:
@@ -129,6 +167,13 @@ def create_frienships():
 
 
 def add_movie_to_list(token, movie):
+    """Add a movie to the watchlist of the user who owns the token
+
+    Parameters:
+        token (str): The authentication token of the user.
+        movie (dict): The movie to add to the watchlist.
+    """
+
     headers = {"Authorization": f"Bearer {token}"}
 
     response = requests.post(
@@ -143,6 +188,13 @@ def add_movie_to_list(token, movie):
 
 
 def add_tv_show_to_list(token, tv_show):
+    """Add a tv show to the watchlist of the user who owns the token
+
+    Parameters:
+        token (str): The authentication token of the user.
+        tv_show (dict): The tv show to add to the watchlist.
+    """
+
     headers = {"Authorization": f"Bearer {token}"}
 
     response = requests.post(
@@ -157,6 +209,13 @@ def add_tv_show_to_list(token, tv_show):
 
 
 def add_person_to_list(token, person):
+    """Add a person to the favourites list of the user who owns the token
+
+    Parameters:
+        token (str): The authentication token of the user.
+        person (dict): The person to add to the favourites list.
+    """
+
     headers = {"Authorization": f"Bearer {token}"}
 
     response = requests.post(
@@ -171,6 +230,14 @@ def add_person_to_list(token, person):
 
 
 def add_movie_to_finished_list(token, movie):
+    """Add a movie to the finished list of the user who owns the token, also
+    add a rating and a review for that movie
+
+    Parameters:
+        token (str): The authentication token of the user.
+        movie (dict): The movie to add to the finished list.
+    """
+
     headers = {"Authorization": f"Bearer {token}"}
 
     response = requests.post(
@@ -207,6 +274,14 @@ def add_movie_to_finished_list(token, movie):
 
 
 def add_tv_show_to_finished_list(token, tv_show):
+    """Add a tv show to the finished list of the user who owns the token, also
+    add a rating and a review for that tv show
+
+    Parameters:
+        token (str): The authentication token of the user.
+        tv_show (dict): The tv show to add to the finished list.
+    """
+
     headers = {"Authorization": f"Bearer {token}"}
 
     response = requests.post(
@@ -244,6 +319,9 @@ def add_tv_show_to_finished_list(token, tv_show):
 
 
 def populate_users_lists():
+    """Iterate over the users list and add random movies, tv shows and people
+    to their lists. Randomly add some of them to the finished lists."""
+
     movies = (
         requests.get(f"{BASE_URL}/movie/popular/{fake.random_int(1, 10)}")
         .json()
@@ -277,17 +355,20 @@ def populate_users_lists():
 
 
 def populate_database():
+    """Create users, friendships and populate the users lists."""
+
     create_users()
     create_frienships()
     populate_users_lists()
     pass
 
 
-WAIT_FOR_BACKEND_RETRIES = 10
-BACKEND_WAIT_TIME = 5
-
-
 def wait_for_backend():
+    """Wait for the backend to become available."""
+
+    BACKEND_WAIT_TIME = 5
+    WAIT_FOR_BACKEND_RETRIES = 10
+
     retries = 0
     while retries < WAIT_FOR_BACKEND_RETRIES:
         try:

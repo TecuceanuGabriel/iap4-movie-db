@@ -11,10 +11,6 @@ from datetime import datetime
 
 auth = Blueprint("auth", __name__)
 
-@auth.route("/", methods=["GET"])
-def index():
-    return jsonify({"message": "server is online"}), 200
-
 @auth.route("/register", methods=["POST"])
 def register():
     data = request.json
@@ -103,11 +99,13 @@ def delete_account():
     if not check_password_hash(user["password"], password):
         return jsonify({"error": "Invalid password"}), 400
 
+    # notify friends that user has deleted their account
     add_to_friends_feed_thread(
         email,
         FeedItem(email, "has deleted their account", datetime.now()),
     )
 
+    # delete associated friendships and friend requests from the db
     mongo.db.friendship.delete_many(
         {"$or": [{"sender": email}, {"recipient": email}]}
     )

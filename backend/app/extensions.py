@@ -1,3 +1,7 @@
+"""
+init extensions used troughout the application
+"""
+
 from flask_pymongo import PyMongo
 from flask_apscheduler import APScheduler
 from redis import Redis
