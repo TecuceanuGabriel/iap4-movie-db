@@ -11,6 +11,9 @@ from datetime import datetime
 
 auth = Blueprint("auth", __name__)
 
+@auth.route("/", methods=["GET"])
+def index():
+    return jsonify({"message": "server is online"}), 200
 
 @auth.route("/register", methods=["POST"])
 def register():
