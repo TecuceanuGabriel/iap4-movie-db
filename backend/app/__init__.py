@@ -23,7 +23,10 @@ def create_app():
     CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 
     mongo.init_app(app)
+
+    # WARNING!!!: DROP DATABASE
     drop_database()
+    # WARNING!!!
 
     scheduler.init_app(app)
     scheduler.start()

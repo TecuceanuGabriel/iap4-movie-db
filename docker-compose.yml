@@ -80,6 +80,10 @@ services:
       - backend
     networks:
       - client-server-network
+    environment:
+      - BASE_URL=http://backend:5000
+      - USER_COUNT=10
+
 
 volumes:
   redis-data:

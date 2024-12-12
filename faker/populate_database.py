@@ -1,12 +1,12 @@
 from faker import Faker
+
 import requests
 import time
+import os
 
-BASE_URL = "http://backend:5000"
-USER_COUNT = 10
+BASE_URL = os.environ.get("BASE_URL")
+USER_COUNT = int(os.environ.get("USER_COUNT", 10))
 
-WAIT_FOR_BACKEND_RETRIES = 10
-BACKEND_WAIT_TIME = 5
 
 fake = Faker()
 
@@ -281,6 +281,10 @@ def populate_database():
     create_frienships()
     populate_users_lists()
     pass
+
+
+WAIT_FOR_BACKEND_RETRIES = 10
+BACKEND_WAIT_TIME = 5
 
 
 def wait_for_backend():
