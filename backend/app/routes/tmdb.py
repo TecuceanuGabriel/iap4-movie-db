@@ -5,6 +5,7 @@ from app.services.tmdb_service import fetch_tmdb_data
 tmdb = Blueprint("tmdb", __name__)
 
 
+# Config info
 @tmdb.route("/configuration", methods=["GET"])
 def get_configuration():
     return fetch_tmdb_data("configuration")
@@ -20,7 +21,7 @@ def get_tv_genres():
     return fetch_tmdb_data("genre/tv/list")
 
 
-# movies
+# Movies
 @tmdb.route("/movie/details/<int:movie_id>")
 def get_movie_details(movie_id):
     return fetch_tmdb_data(f"movie/{movie_id}")
@@ -66,12 +67,13 @@ def get_movie_videos(movie_id):
 def get_movie_recommendations(movie_id):
     return fetch_tmdb_data(f"movie/{movie_id}/recommendations")
 
+
 @tmdb.route("/movie/<int:movie_id>/similar", methods=["GET"])
 def get_movie_similar(movie_id):
     return fetch_tmdb_data(f"movie/{movie_id}/similar")
 
 
-# tv shows
+# Tv shows
 @tmdb.route("/tv/popular/<int:page>", methods=["GET"])
 def get_popular_tv(page):
     return fetch_tmdb_data("tv/popular", {"page": page})
@@ -96,12 +98,13 @@ def get_tv_images(show_id):
 def get_tv_recommendations(show_id):
     return fetch_tmdb_data(f"tv/{show_id}/recommendations")
 
+
 @tmdb.route("/tv/<int:show_id>/similar")
 def get_tv_similiar(show_id):
     return fetch_tmdb_data(f"tv/{show_id}/similar")
 
 
-# people
+# People
 @tmdb.route("/person/details/<int:person_id>")
 def get_person_details(person_id):
     return fetch_tmdb_data(f"person/{person_id}")
@@ -127,7 +130,7 @@ def get_person_tagged_images(person_id):
     return fetch_tmdb_data(f"person/{person_id}/tagged_images")
 
 
-# find
+# Find
 @tmdb.route("/search/multi/<string:query>/<int:page>", methods=["GET"])
 def search_multi(query, page):
     return fetch_tmdb_data("search/multi", {"query": query, "page": page})

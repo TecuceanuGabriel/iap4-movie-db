@@ -2,6 +2,8 @@ import os
 
 
 class Config(object):
+    """Constants used in the application"""
+
     MONGO_URI = os.environ.get("MONGO_URI")
     JWT_SECRET = os.environ.get("JWT_SECRET")
     TMDB_BASE_URL = os.environ.get("TMDB_BASE_URL")

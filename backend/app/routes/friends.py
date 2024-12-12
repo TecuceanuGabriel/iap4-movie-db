@@ -76,6 +76,7 @@ def send_friend_request():
         }
     )
 
+    # notify recipient of friend request
     add_to_feed_thread(
         recipient_email,
         FeedItem(sender_email, "sent you a friend request", datetime.now()),
@@ -309,9 +310,7 @@ def get_friend_profile():
 
     email = payload.get("email")
 
-    if not mongo.db.users.find_one(
-        {"email": friend_email}
-    ):  # check if friend exists
+    if not mongo.db.users.find_one({"email": friend_email}):
         return jsonify({"error": "Friend not found"}), 404
 
     if not mongo.db.friendship.find_one(
@@ -330,32 +329,7 @@ def get_friend_profile():
             "_id": 0,
             "password": 0,
             "email": 0,
-            # "favourite_people": 0,
-            # "movie_finished": 0,
-            # "movie_watchlist": 0,
-            # "tv_finished": 0,
-            # "tv_watchlist": 0,
         },
     )
 
     return jsonify(friend), 200
-
-
-@friends.route("/get_all", methods=["GET"])
-def get_all_users():
-    users = mongo.db.users.find(
-        {},
-        {
-            "_id": 0,
-            "password": 0,
-            "email": 0,
-            "favourite_people": 0,
-            "movie_finished": 0,
-            "movie_watchlist": 0,
-            "tv_finished": 0,
-            "tv_watchlist": 0,
-            "feed": 0,
-        },
-    )
-
-    return jsonify(list(users)), 200
